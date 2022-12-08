@@ -1,0 +1,220 @@
+from ctypes import cast, POINTER
+from comtypes import CLSCTX_ALL
+from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
+import smtplib
+import pyautogui as pg
+import webbrowser
+import pyttsx3
+import datetime
+import time
+import speech_recognition as sr
+
+engine = pyttsx3.init('sapi5')
+voices = engine.getProperty('voices')
+engine.setProperty('voice', voices[0].id)
+def speak(audio):
+    engine.say(audio)
+    engine.runAndWait()
+def wish():
+    hour = int(datetime.datetime.now().hour)
+    if hour >= 0 and hour < 12:
+        speak("goooood morning")
+    elif hour >= 12 and hour < 18:
+        speak("goooood afternoon")
+    else:
+        speak("goooood evening")
+    speak("how can i help you")
+def takecommand():
+    r = sr.Recognizer()
+    with sr.Microphone() as source:
+        global open
+        print("listening...")
+        # r.pause_threshold = 1
+        audio = r.listen(source,timeout=1,phrase_time_limit=5)
+        r.adjust_for_ambient_noise(source)
+
+    try:
+        speak("Recognizing")
+        querry = r.recognize_google(audio, language='en-in')
+        print("user said:", querry)
+    except Exception as e:
+        print(e)
+        print("please say that again")
+        return ""
+    return querry
+def takecommand1():
+    r = sr.Recognizer()
+    with sr.Microphone() as source:
+        global open
+        print("listening...")
+        # r.pause_threshold = 1
+        audio = r.listen(source)
+        r.adjust_for_ambient_noise(source)
+    try:
+        querry = r.recognize_google(audio, language='en-in')
+        print("user said:", querry)
+
+    except Exception as e:
+        print(e)
+        print("please say that again")
+        return ""
+    return querry
+def sendemail(to, contant):
+    server = smtplib.SMTP('smtp.gmail.com', 587)
+    server.ehlo()
+    server.starttls()
+    server.login("thumar.het834@gmail.com", "wribeczttebncnfg")
+    server.sendmail("hc3323864@gmail.com", to, contant)
+    server.close()
+def tellDay():
+    day = datetime.datetime.today().weekday() + 1
+    Day_dict = {1: 'Monday', 2: 'Tuesday',
+                3: 'Wednesday', 4: 'Thursday',
+                5: 'Friday', 6: 'Saturday',
+                7: 'Sunday'}
+
+    if day in Day_dict.keys():
+        day_of_the_week = Day_dict[day]
+        print(day_of_the_week)
+        speak("The day is " + day_of_the_week)
+
+def Hello():
+    speak("hello sir I am your desktop assistant.\nTell me how may I help you")
+
+
+webbrowser.register('chrome',
+                    None,
+                    webbrowser.BackgroundBrowser("C:\Program Files\Google\Chrome\Application\chrome.exe"))
+
+try:
+    from googlesearch import search
+except ImportError:
+    print("No module named 'google' found")
+wish()
+while (True):
+    query = takecommand1()
+    if query.isalpha:
+        query = query.lower()
+
+    if "john" in query and "search" in query:
+        query = query.replace("john", "")
+        for j in search(query.replace("search", ""), tld="co.in", num=1, stop=1, pause=0):
+            url = j
+        print(url)
+        webbrowser.get('chrome').open_new(url)
+    elif "john" in query and "whatsapp" in query:
+        query=query.replace("john","")
+        try:
+                webbrowser.open("https://web.whatsapp.com/")
+                time.sleep(10)
+                pg.hotkey("ctrl", "alt", "/")
+                speak("speak the destination contact name")
+                pg.typewrite(takecommand().lower())
+                pg.press("enter")
+                time.sleep(2)
+                speak("Tell the message")
+                pg.typewrite(takecommand().capitalize())
+                pg.press("enter")
+
+        except Exception as e:
+                speak("sorry can not send message!!")
+
+    elif "john" in query and "hello" in query:
+        query = query.replace("john", "")
+        Hello()
+    elif "john" in query and "current time" in query:
+        query = query.replace("john", "")
+        t = datetime.datetime.now().strftime("%H" + "hour" + "%M" + "minute")
+        speak(t)
+        print(t)
+    elif "john" in query and "day" in query:
+        query = query.replace("john", "")
+        tellDay()
+
+    elif (("john" in query) or ("john" in query)) and "send mail" in query:
+        query = query.replace("john", "")
+        try:
+            speak("enter the destination email id")
+            to = input("Enter here:")
+            speak("what is the message")
+            contant = input("enter the message")
+            sendemail(to, contant)
+            speak("email has been send")
+        except Exception as e:
+            print(e)
+            speak("sorry can not send email!!")
+
+    elif "john" in query and "find" in query:
+        query = query.replace("john", "")
+        pg.hotkey("ctrl", "l")
+        pg.typewrite(query.replace("find", ""))
+        pg.press("enter")
+        new = 1
+    elif "john" in query and "volume" in query:
+        query = query.replace("john", "")
+        c = 0
+        for i in range(0, len(query)):
+            if query[i].isnumeric():
+                c = c * 10
+                c = c + int(query[i])
+
+        devices = AudioUtilities.GetSpeakers()
+        interface = devices.Activate(IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
+        volume = cast(interface, POINTER(IAudioEndpointVolume))
+        vr = volume.GetVolumeRange()
+        volume.SetMasterVolumeLevel(vr[0], None)
+        for i in range(0, c // 2):
+            pg.press("volumeup")
+
+    elif "john" in query and "mute speaker" in query:
+        query = query.replace("john", "")
+        pg.press("volumemute")
+
+    elif "john" in query and "brightness" in query:
+        c = 0
+        query = query.replace("john", "")
+        for i in range(0, len(query)):
+            if query[i].isnumeric():
+                c = c + int(query[i])
+                c = c * 10
+        import screen_brightness_control as sbc
+
+        sbc.set_brightness(c / 10)
+    elif "john" in query and "screenshot" in query:
+        query = query.replace("john", "")
+        pg.hotkey("win", "prtsc")
+    elif "john" in query and "desktop" in query:
+        query = query.replace("john", "")
+        pg.hotkey("win", "d")
+    elif "john" in query and "lock" in query:
+        query = query.replace("john", "")
+        pg.hotkey("win", "l")
+    elif "john" in query and "settings" in query:
+        query = query.replace("john", "")
+        pg.hotkey("win", "i")
+    elif "john" in query and "open my computer" in query:
+        query = query.replace("john", "")
+        pg.hotkey("win", "e")
+    elif "john" in query and "close" in query:
+        query = query.replace("john", "")
+        pg.hotkey("alt", "f4")
+    elif "john" in query and ("minimize" in query or "minimise" in query):
+        query = query.replace("john", "")
+        pg.hotkey("win", "Down")
+        pg.hotkey("win", "Down")
+    elif "john" in query and "shutdown" in query:
+        import os
+
+        query = query.replace("john", "")
+        os.system("shutdown /s /t 1")
+    elif "john" in query and "play" in query:
+        query = query.replace("john", "")
+        query = query.replace('play', ' ')
+        import pywhatkit
+
+        pywhatkit.playonyt(query)
+    elif ("quit" in query and "john" in query) or ("quite" in query and "john" in query):
+        break
+    else:
+        if query is not None:
+            print("Sorry i cannot do that")
